@@ -7,14 +7,15 @@ RUN \
     yum install -y bash-completion --enablerepo=epel; \
     yum clean all; \
     yum autoremove; \
-    yum install -y rsync
+    yum install -y rsync; \
+    yum install -y cmake;
 
 # versions of packages
 ENV \
     CURL_VERSION=7.59.0 \
     GEOS_VERSION=3.7.1 \
-    GEOTIFF_VERSION=1.4.3 \
-	GDAL_VERSION=2.4.1 \
+    GEOTIFF_VERSION=1.7.0 \
+	GDAL_VERSION=3.5.0 \
     HDF4_VERSION=4.2.14 \
 	HDF5_VERSION=1.10.5 \
     NETCDF_VERSION=4.6.2 \
@@ -22,11 +23,11 @@ ENV \
 	OPENJPEG_VERSION=2.3.0 \
     LIBJPEG_TURBO_VERSION=2.0.1 \
     PKGCONFIG_VERSION=0.29.2 \
-    PROJ_VERSION=5.2.0 \
+    PROJ_VERSION=6.1.0 \
     SZIP_VERSION=2.1.1 \
     WEBP_VERSION=1.0.1 \
     ZSTD_VERSION=1.3.8 \
-    MAPSERVER_VERSION=7.2.2
+    MAPSERVER_VERSION=7.6.4
 
 # Paths to things
 ENV \
@@ -50,6 +51,16 @@ RUN \
     make -j ${NPROC} install; \
     cd ../; rm -rf pkg-config
 
+# sqlite3 
+RUN \
+    mkdir sqllite; \
+    cd sqllite; \
+    curl --insecure https://www.sqlite.org/2022/sqlite-autoconf-3390000.tar.gz -o sqlite.tar.gz; \
+    tar -xf sqlite.tar.gz --strip-components=1; \
+    ./configure --prefix=$PREFIX; \
+    make -j ${NPROC} install; \
+    cd ../; rm -rf sqllite
+    
 # proj
 RUN \
     mkdir proj; \
@@ -207,6 +218,16 @@ RUN \
     make -j ${NPROC} install; \
     cd ${BUILD}; rm -rf postgis
 
+# cmake
+RUN \
+    mkdir cmake; \
+    cd cmake; \
+    curl -L --insecure https://github.com/Kitware/CMake/releases/download/v3.23.2/cmake-3.23.2.tar.gz -o cmake.tar.gz; \
+    tar xf cmake.tar.gz --strip-components=1; cd cmake; \
+    ./configure --prefix=$PREFIX; \
+    make -j ${NPROC} install; \
+    cd ${BUILD}; rm -rf cmake
+
 # # mapserver
 RUN \
     mkdir mapserver; \
@@ -229,9 +250,6 @@ RUN \
     make -j ${NPROC} install; \
     cd ../..; rm -rf mapserver
 
-
-
-# 
 # Copy shell scripts and config files over
 COPY bin/* /usr/local/bin/
 
